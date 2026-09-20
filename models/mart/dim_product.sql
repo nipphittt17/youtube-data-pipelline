@@ -1,16 +1,55 @@
 WITH 
 lazada AS (
-    SELECT *
+    SELECT
+        master_product_id,
+        platform,
+        region,
+        product_id,
+        sku_id,
+        product_name,
+        shop_name,
+        price,
+        stock,
+        rating,
+        units_sold,
+        category,
+        brand
     FROM {{ ref('stg_product_lazada') }}
 ),
 
 shopee AS (
-    SELECT *
+    SELECT
+        master_product_id,
+        platform,
+        region,
+        product_id,
+        sku_id,
+        product_name,
+        shop_name,
+        price,
+        stock,
+        rating,
+        units_sold,
+        category,
+        brand
     FROM {{ ref('stg_product_shopee') }}
 ),
 
 tiktok AS (
-    SELECT *
+    SELECT
+        master_product_id,
+        platform,
+        region,
+        product_id,
+        sku_id,
+        product_name,
+        shop_name,
+        price,
+        stock,
+        rating,
+        units_sold,
+        category,
+        brand
     FROM {{ ref('stg_product_tiktok') }}
 )
 

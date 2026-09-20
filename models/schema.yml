@@ -300,7 +300,7 @@ models:
   # Mart views
   # ==========================================
 
-  - name: vw_product_sales
+  - name: vw_product_monthly_sales
     description: "Product-level sales analysis"
 
     data_tests:

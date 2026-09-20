@@ -8,11 +8,10 @@ WITH
             upper(seller_sku) AS sku_id,
             created_at AS order_at,
             qty AS quantity,
-            unit_price AS item_price,
-            seller_discount AS item_platform_discount,
-            voucher_amount AS item_seller_discount,
-            shipping_cost AS item_shipping_fee,
-            paid_amount AS item_price_after_discount,
+            round(unit_price,2) AS item_price,
+            round(seller_discount,2) AS item_platform_discount,
+            round(voucher_amount,2) AS item_seller_discount,
+            round(shipping_cost,2) AS item_shipping_fee,
             upper(status) AS order_status
         FROM  {{ source('raw_data', 'order_lazada') }}
     ),
@@ -40,7 +39,11 @@ SELECT
     o.item_platform_discount,
     o.item_seller_discount,
     o.item_shipping_fee,
-    o.item_price_after_discount,
+    ((o.item_price * o.quantity) 
+        - o.item_platform_discount
+        - o.item_seller_discount 
+        + o.item_shipping_fee) 
+    AS total_price,
     o.order_status
 FROM orders o
 LEFT JOIN mapping m

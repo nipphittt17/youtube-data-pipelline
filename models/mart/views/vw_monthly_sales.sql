@@ -15,7 +15,7 @@ WITH
             item_platform_discount,
             item_seller_discount,
             item_shipping_fee,
-            item_price_after_discount,
+            total_price,
             order_status
         FROM {{ ref('fact_order') }}
     )
@@ -26,10 +26,10 @@ SELECT
     region,
     COUNT(DISTINCT order_id) AS total_orders,
     COALESCE(SUM(quantity),0) AS total_units,
-    COALESCE(SUM(item_price_after_discount),0) AS total_revenue
+    COALESCE(SUM(total_price),0) AS total_revenue
 FROM orders o
-GROUP BY 1,2,3
-ORDER BY 1,2,3
+GROUP BY ALL
+ORDER BY platform, region, order_year_month
 
 
 

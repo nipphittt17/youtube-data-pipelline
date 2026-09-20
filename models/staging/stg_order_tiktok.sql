@@ -9,10 +9,9 @@ WITH
             created_time AS order_at,
             quantity,
             sale_price AS item_price,
-            platform_discount AS item_platform_discount,
-            seller_discount AS item_seller_discount,
-            shipping_fee AS item_shipping_fee,
-            settlement_amount AS item_price_after_discount,
+            round(platform_discount,2) AS item_platform_discount,
+            round(seller_discount,2) AS item_seller_discount,
+            round(shipping_fee,2) AS item_shipping_fee,
             upper(status) AS order_status
         FROM  {{ source('raw_data', 'order_tiktok') }}
         ORDER BY order_at DESC
@@ -41,7 +40,11 @@ SELECT
     o.item_platform_discount,
     o.item_seller_discount,
     o.item_shipping_fee,
-    o.item_price_after_discount,
+    ((o.item_price * o.quantity) 
+        - o.item_platform_discount
+        - o.item_seller_discount 
+        + o.item_shipping_fee) 
+    AS total_price,
     o.order_status
 FROM orders o
 LEFT JOIN mapping m
