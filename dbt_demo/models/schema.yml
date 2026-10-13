@@ -231,8 +231,43 @@ models:
   # Mart tables
   # ==========================================
 
+
+  - name: fact_product_snapshot
+    description: "Historical product and SKU-level snapshots across all 3 platforms. Each record represents a SKU information at a specific updated_at."
+
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - platform
+              - region
+              - product_id
+              - sku_id
+              - updated_at
+
+    columns:
+      - name: platform
+        data_tests:
+          - not_null
+
+      - name: region
+        data_tests:
+          - not_null
+
+      - name: product_id
+        data_tests:
+          - not_null
+
+      - name: sku_id
+        data_tests:
+          - not_null
+
+      - name: updated_at
+        data_tests:
+          - not_null
+
   - name: dim_product
-    description: "A product dimension combining all 3 platform product data"
+    description: "Current product and SKU-level dimension across all 3 platforms, containing the latest known product attributes and master product mapping."
 
     data_tests:
       - dbt_utils.unique_combination_of_columns:
@@ -262,7 +297,7 @@ models:
 
 
   - name: fact_order
-    description: "An order fact table combining all 3 platform order data"
+    description: "Order item fact table combining transaction data from all 3 platforms. Each record represents an ordered SKU within an order."
 
     data_tests:
       - dbt_utils.unique_combination_of_columns:
@@ -301,8 +336,7 @@ models:
   # ==========================================
 
   - name: vw_product_monthly_sales
-    description: "Product-level sales analysis"
-
+    description: "Monthly SKU-level sales performance across all 3 platforms, designed as a reusable BI dataset for product, brand, category, platform, and regional analysis."
     data_tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -331,7 +365,7 @@ models:
 
 
   - name: vw_monthly_sales
-    description: "Overall monthly sales performance"
+    description: "Monthly sales performance aggregated by platform and region, providing a high-level dataset for overall sales and trend analysis."
 
     data_tests:
       - dbt_utils.unique_combination_of_columns:
