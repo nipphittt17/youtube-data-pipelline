@@ -11,3 +11,5 @@ dbt_internal_packages/
 __pycache__/
 *.py[cod]
 .env
+*.p8
+*.pub

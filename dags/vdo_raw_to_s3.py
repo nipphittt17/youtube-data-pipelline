@@ -10,21 +10,9 @@ from googleapiclient.discovery import build
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.utils.dates import days_ago
-
+# from airflow.utils.dates import days_ago
 
 logger = logging.getLogger(__name__)
-
-# dag argument
-# default_args = {
-#     'owner': 'Nipphit Apisitpuwakul',
-#     'start_date': days_ago(0),
-#     'email': ['keanapisit@hotmail.com'],
-#     'email_on_failure': True,
-#     'email_on_retry': True,
-#     'retries': 1,
-#     'retry_delay': timedelta(minutes=5),
-# }
 
 def s3_setup():
     region = os.getenv(
@@ -40,6 +28,14 @@ def s3_setup():
 
     return bucket, s3
 
+
+def channel_setup():
+    return [
+            ("dice", os.environ["DICE_CHANNEL_ID"]),
+            ("sonray", os.environ["TADA_CHANNEL_ID"]),
+    ]
+
+
 def youtube_api_setup():
     youtube = build(
         "youtube",
@@ -48,20 +44,17 @@ def youtube_api_setup():
         cache_discovery=False,
     )
     
-    channels = [
-            ("dice", os.environ["DICE_CHANNEL_ID"]),
-            ("sonray", os.environ["TADA_CHANNEL_ID"]),
-    ]
+    channels = channel_setup()
+
     return youtube, channels
 
 # --------------------------------------------------
 # Fetch all channel infomration for channel IDs
 # --------------------------------------------------
 
-
 def get_channel(youtube, channel_id):
     response = youtube.channels().list(
-            part="contentDetails",
+            part="snippet,contentDetails,statistics",
             id=channel_id,
     ).execute()
     
@@ -277,11 +270,6 @@ def ingest_video_details(**context):
             "No S3 object keys found from ingest_videos."
         )
 
-    channels = [
-        ("dice", os.environ["DICE_CHANNEL_ID"]),
-        ("sonray", os.environ["TADA_CHANNEL_ID"]),
-    ]
-
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     logger.info("Starting video details ingestion.")
@@ -370,7 +358,7 @@ def ingest_video_details(**context):
 
 with DAG(
     dag_id="vdo_raw_to_s3",
-    start_date=datetime(2026, 12, 1),
+    start_date=datetime(2026, 10, 1),
     schedule="@hourly",
     catchup=False,
     tags=["youtube", "s3", "ingestion"],

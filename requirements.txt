@@ -1,2 +1,9 @@
-google-api-python-client
+polars
 boto3
+snowflake-connector-python
+snowflake-snowpark-python
+google-api-python-client
+python-dotenv
+apache-airflow==3.3.2
+apache-airflow-core==3.3.2
+apache-airflow-task-sdk==1.3.2
