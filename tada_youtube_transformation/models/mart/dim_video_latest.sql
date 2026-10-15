@@ -1,0 +1,27 @@
+{{ config(materialized='table') }}
+
+SELECT
+    RECORDED_AT,
+    VDO_ID,
+    VDO_TITLE,
+    PUBLISHED_AT,
+    CHANNEL_ID,
+    CHANNEL_TITLE,
+    VDO_CATEGORY_ID,
+    VDO_TAGS,
+    VDO_DEFAULT_LANGUAGE,
+    THUMBNAILS_URL,
+    THUMBNAILS_WIDTH,
+    THUMBNAILS_HEIGHT,
+    VDO_DURATION,
+    VDO_DEFINITION,
+    VDO_CAPTION,
+    VDO_VIEW_CNT,
+    VDO_LIKE_CNT,
+    VDO_COMMENT_CNT
+FROM {{ source('snapshot', 'stg_video_daily_snapshot') }}
+QUALIFY ROW_NUMBER() OVER (
+    PARTITION BY VDO_ID
+    ORDER BY RECORDED_AT DESC
+) = 1
+
