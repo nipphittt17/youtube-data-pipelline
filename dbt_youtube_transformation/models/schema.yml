@@ -1,0 +1,82 @@
+
+version: 2
+
+sources:
+  - name: snapshot
+    description: "Staging tables containing daily snapshots of YouTube channel and video data."
+    database: TADA_YOUTUBE_DATA
+    schema: STAGING
+
+    tables:
+      - name: stg_channel_daily_snapshot
+        description: "Daily snapshots of YouTube channel metadata and cumulative statistics."
+
+      - name: stg_video_daily_snapshot
+        description: "Daily snapshots of YouTube video metadata and cumulative performance statistics."
+
+models:
+  - name: dim_channel
+    description: "Channel dimension containing descriptive attributes for YouTube channels."
+    columns:
+      - name: recorded_at
+        description: "Timestamp when the channel data was recorded."
+        data_tests:
+          - not_null
+
+      - name: channel_id
+        description: "Unique identifier of the YouTube channel."
+        data_tests:
+          - unique
+          - not_null
+
+  - name: dim_video
+    description: "Video dimension containing descriptive attributes and metadata for YouTube videos."
+    columns:
+      - name: recorded_at
+        description: "Timestamp when the video data was recorded."
+        data_tests:
+          - not_null
+
+      - name: vdo_id
+        description: "Unique identifier of the YouTube video."
+        data_tests:
+          - unique
+          - not_null
+
+  - name: fct_channel_daily_performance
+    description: "Daily channel performance fact table containing cumulative statistics and derived daily growth metrics based on historical snapshots."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - recorded_at
+              - channel_id
+    columns:
+      - name: recorded_at
+        description: "Timestamp of the channel performance snapshot."
+        data_tests:
+          - not_null
+
+      - name: channel_id
+        description: "Identifier of the channel associated with the performance record."
+        data_tests:
+          - not_null
+
+  - name: fct_video_daily_performance
+    description: "Daily video performance fact table containing cumulative views, likes, and comments, along with derived daily growth metrics and growth percentages."
+    data_tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - recorded_at
+              - vdo_id
+    columns:
+      - name: recorded_at
+        description: "Timestamp of the video performance snapshot."
+        data_tests:
+          - not_null
+
+      - name: vdo_id
+        description: "Identifier of the video associated with the performance record."
+        data_tests:
+          - not_null

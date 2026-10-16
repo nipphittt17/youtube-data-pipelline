@@ -84,7 +84,7 @@ x-airflow-common:
     - ${HOME}/.aws:/home/airflow/.aws:ro
     - ${AIRFLOW_PROJ_DIR:-.}/rsa_key.p8:/opt/airflow/keys/rsa_key.p8:ro
     - ${HOME}/.dbt:/opt/airflow/.dbt:ro
-    - ${AIRFLOW_PROJ_DIR:-.}/tada_youtube_transformation:/opt/airflow/tada_youtube_transformation
+    - ${AIRFLOW_PROJ_DIR:-.}/dbt_youtube_transformation:/opt/airflow/dbt_youtube_transformation
     
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
