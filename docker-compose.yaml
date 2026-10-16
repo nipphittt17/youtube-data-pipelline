@@ -16,7 +16,7 @@
 # under the License.
 #
 
-# Basic Airflow cluster configuration for CeleryExecutor with Redis and PostgreSQL.
+# Basic Airflow cluster configuration for LocalExecutor with PostgreSQL (lightweight local setup).
 #
 # WARNING: This configuration is for local development. Do not use it in a production deployment.
 #
@@ -55,14 +55,12 @@ x-airflow-common:
     - ${ENV_FILE_PATH:-.env}
   environment:
     &airflow-common-env
-    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql+psycopg2://airflow:airflow@postgres/airflow
-    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: ${FERNET_KEY}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET:-airflow_jwt_secret}
     AIRFLOW__API_AUTH__JWT_ISSUER: ${AIRFLOW__API_AUTH__JWT_ISSUER:-airflow}
@@ -76,6 +74,7 @@ x-airflow-common:
     _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-}
     # The following line can be used to set a custom config file, stored in the local config folder
     AIRFLOW_CONFIG: '/opt/airflow/config/airflow.cfg'
+    DBT_SEND_ANONYMOUS_USAGE_STATS: 'false'
 
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
@@ -84,12 +83,12 @@ x-airflow-common:
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     - ${HOME}/.aws:/home/airflow/.aws:ro
     - ${AIRFLOW_PROJ_DIR:-.}/rsa_key.p8:/opt/airflow/keys/rsa_key.p8:ro
+    - ${HOME}/.dbt:/opt/airflow/.dbt:ro
+    - ${AIRFLOW_PROJ_DIR:-.}/tada_youtube_transformation:/opt/airflow/tada_youtube_transformation
     
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
-    redis:
-      condition: service_healthy
     postgres:
       condition: service_healthy
 
@@ -107,20 +106,6 @@ services:
       interval: 10s
       retries: 5
       start_period: 5s
-    restart: always
-
-  redis:
-    # Redis is limited to 7.2-bookworm due to licencing change
-    # https://redis.io/blog/redis-adopts-dual-source-available-licensing/
-    image: redis:7.2-bookworm
-    expose:
-      - 6379
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 30s
-      retries: 50
-      start_period: 30s
     restart: always
 
   airflow-apiserver:
@@ -167,29 +152,6 @@ services:
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
-
-  airflow-worker:
-    <<: *airflow-common
-    command: celery worker
-    healthcheck:
-      # yamllint disable rule:line-length
-      test: ["CMD-SHELL", 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"']
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    environment:
-      <<: *airflow-common-env
-      # Required to handle warm shutdown of the celery workers properly
-      # See https://airflow.apache.org/docs/docker-stack/entrypoint.html#signal-propagation
-      DUMB_INIT_SETSID: "0"
-    restart: always
-    depends_on:
-      <<: *airflow-common-depends-on
-      airflow-apiserver:
-        condition: service_healthy
       airflow-init:
         condition: service_completed_successfully
 
@@ -314,28 +276,6 @@ services:
       - airflow
     depends_on:
       <<: *airflow-common-depends-on
-
-  # You can enable flower by adding "--profile flower" option e.g. docker-compose --profile flower up
-  # or by explicitly targeted on the command line e.g. docker-compose up flower.
-  # See: https://docs.docker.com/compose/profiles/
-  flower:
-    <<: *airflow-common
-    command: celery flower
-    profiles:
-      - flower
-    ports:
-      - "5555:5555"
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    restart: always
-    depends_on:
-      <<: *airflow-common-depends-on
-      airflow-init:
-        condition: service_completed_successfully
 
 volumes:
   postgres-db-volume:
