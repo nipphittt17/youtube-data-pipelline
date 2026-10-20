@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 def channel_setup():
     return [
             ("dice", os.environ["DICE_CHANNEL_ID"]),
+            ("dice_blue", os.environ["DICE_BLUE_CHANNEL_ID"]),
             ("bus", os.environ["BUS_CHANNEL_ID"]),
             ("tada", os.environ["TADA_CHANNEL_ID"]),
     ]
@@ -569,7 +570,7 @@ def load_channel_snowflake(**context):
         source_df = session.create_dataframe(records)
 
         join_condition = (
-            (target_table["USERNAME"] == source_df["USERNAME"])
+            (target_table["CHANNEL_ID"] == source_df["CHANNEL_ID"])
             & (target_table["RECORDED_AT"] == source_df["RECORDED_AT"])
         )
 
@@ -578,7 +579,7 @@ def load_channel_snowflake(**context):
             join_expr=join_condition,
             clauses=[
                 when_matched().update({
-                     "USERNAME": source_df["USERNAME"],
+                    "USERNAME": source_df["USERNAME"],
                     "CHANNEL_TITLE": source_df["CHANNEL_TITLE"],
                     "PUBLISHED_AT": source_df["PUBLISHED_AT"],
                     "TOTAL_VIEW": source_df["TOTAL_VIEW"],
